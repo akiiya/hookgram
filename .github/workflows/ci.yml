@@ -47,6 +47,14 @@ jobs:
           go mod tidy
           git diff --exit-code -- go.mod go.sum
 
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: web
+        run: npm run build
+
       - name: Run Go tests
         env:
           CGO_ENABLED: "0"
@@ -62,14 +70,6 @@ jobs:
             echo "Native SQL call found. Use GORM APIs unless explicitly reviewed."
             exit 1
           fi
-
-      - name: Install frontend dependencies
-        working-directory: web
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: web
-        run: npm run build
 
       - name: Build Go binary
         env:
