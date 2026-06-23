@@ -73,6 +73,14 @@ try {
         exit 1
     }
 
+    Say "6L+b5YWlIHdlYiDlronoo4Xkvp3otZY="
+    Push-Location $WebDir
+    Invoke-Native "npm install failed" "npm.cmd" @("install")
+
+    Say "5p6E5bu65YmN56uv"
+    Invoke-Native "npm run build failed" "npm.cmd" @("run", "build")
+    Pop-Location
+
     Say "5omn6KGMIGdvIG1vZCB0aWR5"
     Push-Location $Root
     Invoke-Native "go mod tidy failed" $GoExe @("mod", "tidy")
@@ -99,14 +107,6 @@ try {
         throw "rg scan failed with code $scanCode"
     }
     Say "5Y6f55SfIFNRTCDmiavmj4/pgJrov4c="
-    Pop-Location
-
-    Say "6L+b5YWlIHdlYiDlronoo4Xkvp3otZY="
-    Push-Location $WebDir
-    Invoke-Native "npm install failed" "npm.cmd" @("install")
-
-    Say "5p6E5bu65YmN56uv"
-    Invoke-Native "npm run build failed" "npm.cmd" @("run", "build")
     Pop-Location
 
     Say "5omn6KGMIFdpbmRvd3Mg5p6E5bu66ISa5pys"
