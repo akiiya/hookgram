@@ -42,6 +42,7 @@ hookgram-v0.1.0-rc.1-checksums.txt
 - 新增 GitHub Actions CI：测试、gofmt、go mod tidy、原生 SQL 扫描、前端构建、Go build、最小启动检查。
 - 新增 GitHub Actions Release：tag 或手动触发，多平台构建、压缩、checksums、GitHub Release 上传。
 - 新增 Linux 一键安装脚本：下载 Release 包、安装到 `/opt/hookgram`、创建 `hookgram.service`、启动服务。
+- Linux 安装脚本支持 `--uninstall` 保留数据卸载、`--purge` 彻底卸载和 `--dry-run` 预览操作。
 - 新增 `/api/version`：返回版本、commit、构建时间和平台。
 - 管理端系统设置页展示当前版本信息。
 - 为后续 Web 管理端检查更新和程序自更新预留版本结构；当前未实现自动升级。
@@ -88,6 +89,7 @@ http://127.0.0.1:8787/api/version
 
 - `v0.1.0-rc.1` 仍是 RC，不建议直接作为无人值守生产版本。
 - systemd 安装仅支持 Linux，不支持 Windows。
+- `--purge` 会删除 `/var/lib/hookgram` 下的配置和数据，执行前需要确认或显式传入 `--yes`。
 - Session 为内存态，服务重启后需要重新登录。
 - `/url` 不返回完整 Token，因为系统不保存 Webhook Token 明文。
 - 自更新功能当前只预留版本信息和发布结构，未实现自动升级。

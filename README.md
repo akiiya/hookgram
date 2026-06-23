@@ -58,6 +58,26 @@ curl -fsSL https://raw.githubusercontent.com/akiiya/hookgram/main/scripts/instal
 
 脚本会安装到 `/opt/hookgram`，数据目录为 `/var/lib/hookgram`，并创建 `hookgram.service`。
 
+卸载程序，保留配置和数据：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/akiiya/hookgram/main/scripts/install-linux.sh | sudo bash -s -- --uninstall
+```
+
+彻底卸载，删除配置和数据：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/akiiya/hookgram/main/scripts/install-linux.sh | sudo bash -s -- --purge
+```
+
+跳过确认彻底卸载：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/akiiya/hookgram/main/scripts/install-linux.sh | sudo bash -s -- --purge --yes
+```
+
+`--uninstall` 会保留 `/var/lib/hookgram`；`--purge` 会删除 `/var/lib/hookgram`，请谨慎使用。
+
 ## Linux 手动安装
 
 在 GitHub Releases 下载对应系统和架构的二进制压缩包：
