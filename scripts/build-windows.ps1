@@ -1,6 +1,6 @@
 param(
     [string]$GoExe = "C:\go_v1.26\bin\go.exe",
-    [string]$Version = "v0.1.0-rc.1"
+    [string]$Version = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -8,6 +8,7 @@ $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $WebDir = Join-Path $Root "web"
 $DistDir = Join-Path $Root "dist"
 $Output = Join-Path $DistDir "hookgram.exe"
+$VersionFile = Join-Path $Root "VERSION"
 
 function Zh([string]$Base64) {
     [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($Base64))
@@ -27,6 +28,17 @@ function Invoke-Native {
 
 if (!(Test-Path $GoExe)) {
     throw "$(Zh '5pyq5om+5YiwIEdvIOe8luivkeWZqO+8mg==')$GoExe"
+}
+
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    if (!(Test-Path $VersionFile)) {
+        throw "VERSION file not found: $VersionFile"
+    }
+    $Version = (Get-Content -Encoding UTF8 -Path $VersionFile -TotalCount 1).Trim()
+}
+
+if ($Version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$') {
+    throw "Invalid VERSION: $Version"
 }
 
 if (!(Get-Command node.exe -ErrorAction SilentlyContinue)) {
