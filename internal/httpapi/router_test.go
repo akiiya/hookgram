@@ -63,7 +63,7 @@ func TestSetupLoginTokenAndWebhookFlow(t *testing.T) {
 	router := NewRouter(cfgManager, services)
 
 	assertJSON(t, router, http.MethodGet, "/api/setup/status", nil, http.StatusOK, `"initialized":false`)
-	assertJSON(t, router, http.MethodGet, "/api/version", nil, http.StatusOK, `"version":"v0.1.0-rc.1"`)
+	assertJSON(t, router, http.MethodGet, "/api/version", nil, http.StatusOK, `"version":"unknown"`)
 	setupPage := httptest.NewRecorder()
 	router.ServeHTTP(setupPage, httptest.NewRequest(http.MethodGet, "/setup", nil))
 	if setupPage.Code != http.StatusOK || !strings.Contains(setupPage.Body.String(), "Hookgram") {

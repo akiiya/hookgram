@@ -2,7 +2,9 @@
 
 Hookgram 是一个自托管的 Telegram Bot Webhook 消息转发系统。用户通过 Bot 创建自己的 Webhook Token，外部系统调用对应 URL 后，消息会转发到该 Telegram 用户；管理员可在 Web 管理端完成初始化、配置、用户管理、Token 管理和推送记录查看。
 
-当前版本：`v0.1.0-rc.1`
+当前开发目标：`v0.1.0-rc.3`
+
+最新公开版本：`v0.1.0-rc.2`
 
 默认地址：`http://127.0.0.1:8787`  
 首次初始化：`http://127.0.0.1:8787/setup`
@@ -53,7 +55,7 @@ curl -fsSL https://raw.githubusercontent.com/akiiya/hookgram/main/scripts/instal
 指定版本：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/akiiya/hookgram/main/scripts/install-linux.sh | sudo HOOKGRAM_VERSION=v0.1.0-rc.1 bash
+curl -fsSL https://raw.githubusercontent.com/akiiya/hookgram/main/scripts/install-linux.sh | sudo env HOOKGRAM_VERSION=v0.1.0-rc.3 bash
 ```
 
 脚本会安装到 `/opt/hookgram`，数据目录为 `/var/lib/hookgram`，并创建 `hookgram.service`。
@@ -89,7 +91,7 @@ https://github.com/akiiya/hookgram/releases
 示例：
 
 ```bash
-tar -xzf hookgram-v0.1.0-rc.1-linux-amd64.tar.gz
+tar -xzf hookgram-v0.1.0-rc.3-linux-amd64.tar.gz
 sudo install -m 0755 hookgram /opt/hookgram/hookgram
 HOOKGRAM_DATA_DIR=/var/lib/hookgram HOOKGRAM_CONFIG=/var/lib/hookgram/config.yaml /opt/hookgram/hookgram
 ```
@@ -187,25 +189,29 @@ HOOKGRAM_CONFIG=/var/lib/hookgram/config.yaml
 
 ## GitHub Actions 与 Release
 
-- `ci.yml`：`dev` push、指向 `main` 的 PR、`main` push 自动测试。
-- `main` push 会构建 Release 候选产物。
-- `release.yml`：推送 `v*` tag 或手动触发后创建 GitHub Release。
-- Release 产物会注入版本信息，并生成 `hookgram-{version}-checksums.txt`。
+- `VERSION` 是唯一版本号来源。
+- `ci.yml`：`dev` push、指向 `main` 的 PR 只跑 CI，不发布。
+- `release.yml`：`main` 被合并后自动读取 `VERSION`，完成测试、验证、打 tag、构建多平台二进制、生成 checksums、创建 GitHub Release。
+- 不需要人工打 tag，也不需要人工创建 Release。
+- 发布下一个版本时，在 `dev` 修改 `VERSION`，例如 `v0.1.0-rc.3` -> `v0.1.0-rc.4`，CI 通过后合并到 `main`。
+- 如果 `VERSION` 对应 tag 已存在，发布 workflow 会失败并提示升级版本号。
 
 资产命名：
 
 ```text
-hookgram-v0.1.0-rc.1-windows-amd64.zip
-hookgram-v0.1.0-rc.1-windows-arm64.zip
-hookgram-v0.1.0-rc.1-linux-amd64.tar.gz
-hookgram-v0.1.0-rc.1-linux-arm64.tar.gz
-hookgram-v0.1.0-rc.1-checksums.txt
+hookgram-v0.1.0-rc.3-windows-amd64.zip
+hookgram-v0.1.0-rc.3-windows-arm64.zip
+hookgram-v0.1.0-rc.3-linux-amd64.tar.gz
+hookgram-v0.1.0-rc.3-linux-arm64.tar.gz
+hookgram-v0.1.0-rc.3-linux-386.tar.gz
+hookgram-v0.1.0-rc.3-linux-armv7.tar.gz
+hookgram-v0.1.0-rc.3-checksums.txt
 ```
 
 ## 分支策略
 
-- `main`：稳定主分支，只接受合并。
-- `dev`：日常开发。
+- `main`：保护分支，只接受 PR 或 GitHub 页面 merge；合并后自动发布。
+- `dev`：日常开发，push 后只跑 CI。
 - `feature/*`：功能开发。
 - `release/*`：发布收口。
 - `hotfix/*`：紧急修复。
@@ -224,7 +230,7 @@ GET /api/version
 
 ## 已知限制
 
-- `v0.1.0-rc.1` 是 Release Candidate，适合验收和小范围自托管试用。
+- `v0.1.0-rc.3` 是下一轮 Release Candidate 目标，适合验收和小范围自托管试用。
 - Linux 一键安装依赖对应 GitHub Release 资产已经存在。
 - systemd 安装仅支持 Linux，不支持 Windows。
 - `windows/386` 暂不发布资产，原因是当前纯 Go SQLite 依赖在该目标下交叉编译失败。

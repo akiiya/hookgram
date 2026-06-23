@@ -39,13 +39,13 @@ Options:
 -h, --help     显示帮助
 
 Environment:
-HOOKGRAM_VERSION=v0.1.0-rc.1
+HOOKGRAM_VERSION=v0.1.0-rc.3
 HOOKGRAM_DRY_RUN=1
 HOOKGRAM_YES=1
 
 Examples:
 bash install-linux.sh
-HOOKGRAM_VERSION=v0.1.0-rc.1 bash install-linux.sh
+HOOKGRAM_VERSION=v0.1.0-rc.3 bash install-linux.sh
 bash install-linux.sh --uninstall
 bash install-linux.sh --purge
 bash install-linux.sh --purge --yes
