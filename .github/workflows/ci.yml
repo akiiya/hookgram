@@ -1,0 +1,171 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Check gofmt
+        run: |
+          files="$(find cmd internal web -name '*.go' -type f)"
+          output="$(gofmt -l $files)"
+          if [ -n "$output" ]; then
+            echo "$output"
+            exit 1
+          fi
+
+      - name: Check go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
+      - name: Run Go tests
+        env:
+          CGO_ENABLED: "0"
+        run: go test ./...
+
+      - name: Scan native SQL calls
+        run: |
+          if grep -RInE \
+            --exclude-dir=node_modules \
+            --exclude-dir=dist \
+            --exclude-dir=data \
+            'db\.Raw|db\.Exec|\.Raw\(|\.Exec\(' cmd internal web; then
+            echo "Native SQL call found. Use GORM APIs unless explicitly reviewed."
+            exit 1
+          fi
+
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: web
+        run: npm run build
+
+      - name: Build Go binary
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          VERSION="$(sed -n 's/^[[:space:]]*Version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' internal/version/version.go | head -n1)"
+          go build -trimpath \
+            -ldflags "-s -w -X hookgram/internal/version.Version=$VERSION -X hookgram/internal/version.Commit=${GITHUB_SHA::7} -X hookgram/internal/version.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            -o hookgram-ci ./cmd/server
+
+      - name: Minimal startup smoke
+        run: |
+          export HOOKGRAM_DATA_DIR="${RUNNER_TEMP}/hookgram-data"
+          export HOOKGRAM_CONFIG="${HOOKGRAM_DATA_DIR}/config.yaml"
+          ./hookgram-ci > "${RUNNER_TEMP}/hookgram.log" 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:8787/api/setup/status >/tmp/hookgram-status.json; then
+              cat /tmp/hookgram-status.json
+              exit 0
+            fi
+            if ! kill -0 "$pid" 2>/dev/null; then
+              cat "${RUNNER_TEMP}/hookgram.log"
+              exit 1
+            fi
+            sleep 0.5
+          done
+          cat "${RUNNER_TEMP}/hookgram.log"
+          exit 1
+
+  candidate:
+    name: Build Candidate Artifacts
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build frontend
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build candidate packages
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          VERSION="$(sed -n 's/^[[:space:]]*Version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' internal/version/version.go | head -n1)"
+          if ! printf '%s' "$VERSION" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$'; then
+            echo "Invalid version: $VERSION"
+            exit 1
+          fi
+          mkdir -p release-assets
+          for target in "windows amd64 amd64 zip" "windows arm64 arm64 zip" "linux amd64 amd64 tar.gz" "linux arm64 arm64 tar.gz"; do
+            set -- $target
+            goos="$1"
+            goarch="$2"
+            label="$3"
+            format="$4"
+            pkgdir="build/${goos}-${label}"
+            rm -rf "$pkgdir"
+            mkdir -p "$pkgdir"
+            ext=""
+            if [ "$goos" = "windows" ]; then ext=".exe"; fi
+            GOOS="$goos" GOARCH="$goarch" go build -trimpath \
+              -ldflags "-s -w -X hookgram/internal/version.Version=$VERSION -X hookgram/internal/version.Commit=${GITHUB_SHA::7} -X hookgram/internal/version.BuildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+              -o "$pkgdir/hookgram$ext" ./cmd/server
+            cp README.md RELEASE.md "$pkgdir/"
+            [ -f LICENSE ] && cp LICENSE "$pkgdir/"
+            asset="hookgram-${VERSION}-${goos}-${label}"
+            if [ "$format" = "zip" ]; then
+              (cd "$pkgdir" && zip -qr "../../release-assets/${asset}.zip" .)
+            else
+              tar -C "$pkgdir" -czf "release-assets/${asset}.tar.gz" .
+            fi
+          done
+          (cd release-assets && sha256sum hookgram-* > "hookgram-${VERSION}-checksums.txt")
+
+      - name: Upload candidate artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hookgram-candidate
+          path: release-assets/*

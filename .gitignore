@@ -1,0 +1,16 @@
+data/
+dist/
+web/node_modules/
+web/dist/
+*.log
+*.tmp
+*.temp
+*.pid
+*.out
+.gocache/
+.gopath/
+.npm-cache/
+.smoke/
+data.smoke-backup-*/
+release-assets/
+tmp/
