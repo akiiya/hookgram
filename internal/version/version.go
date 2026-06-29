@@ -1,7 +1,4 @@
+// Package version exposes build version information injected by ldflags.
 package version
 
-var (
-	Version   = "unknown"
-	Commit    = "unknown"
-	BuildDate = "unknown"
-)
+var Version = "dev"

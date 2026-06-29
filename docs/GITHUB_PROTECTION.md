@@ -25,10 +25,11 @@ main
 ## 分支约束
 
 - `main` 不允许直接 push。
+- `main` 禁止 force push。
 - `dev` 可以直接 push，但必须通过 CI。
-- Release 由 `main` 上的 GitHub Actions 自动完成。
-- 版本号由 `VERSION` 文件控制。
-- 每次合并到 `main` 前必须确认 `VERSION` 尚未发布。
+- `dev` -> `main` 通过 PR 合并。
+- Release 不由 `main` push 触发，而由新的 `v*` tag 触发。
+- 版本号以 Git tag 为唯一来源，不使用版本文件。
 
 ## Actions 权限
 
@@ -39,6 +40,6 @@ permissions:
   contents: write
 ```
 
-该权限用于创建 `v*` tag 和 GitHub Release。
+该权限用于通过 GitHub Actions 创建或更新 GitHub Release 并上传资产。
 
-如果仓库启用了更严格的 tag protection，需要允许 GitHub Actions 创建 `v*` tag，或改用受控的 release token。
+如果仓库启用了更严格的 tag protection，需要允许维护者创建 `v*` tag；如需让 Actions 使用更高权限 token，也应使用受控的 release token。

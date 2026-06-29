@@ -1,7 +1,21 @@
-data/
-dist/
-web/node_modules/
-web/dist/
+/dist/
+/hookgram
+/hookgram.exe
+
+# Runtime data and local secrets.
+/data/
+*.db
+*.db-shm
+*.db-wal
+/config.yaml
+config.yaml
+
+# Frontend build and dependencies.
+/web/node_modules/
+/web/dist/*
+!/web/dist/.gitkeep
+
+# Local caches and temporary files.
 *.log
 *.tmp
 *.temp
