@@ -1,17 +1,17 @@
-# Hookgram v0.1.0-rc.3 发布说明
+# Hookgram v0.1.0-rc.4 发布说明
 
-当前开发目标：`v0.1.0-rc.3`
+当前开发目标：`v0.1.0-rc.4`
 
-最新公开版本：`v0.1.0-rc.2`
+最新公开版本：`v0.1.0-rc.3`
 
 版本定位：Release Candidate
 
-`v0.1.0-rc.3` 目标是重构发布流程：日常开发只推 `dev`，用户在 GitHub 页面将变更合并到 `main` 后，由 GitHub Actions 自动完成测试、验证、tag、构建和 Release 发布。
+`v0.1.0-rc.4` 目标是重构发布流程：日常开发只推 `dev`，用户在 GitHub 页面将变更合并到 `main` 后，由 GitHub Actions 自动完成测试、验证、tag、构建和 Release 发布。
 
 ## 版本号规则
 
 - `VERSION` 是唯一版本号来源。
-- Release Candidate：`v0.1.0-rc.1`、`v0.1.0-rc.2`、`v0.1.0-rc.3`
+- Release Candidate：`v0.1.0-rc.1`、`v0.1.0-rc.2`、`v0.1.0-rc.3`、`v0.1.0-rc.4`
 - 正式版：`v0.1.0`、`v0.1.1`、`v0.2.0`、`v1.0.0`
 - `main` 发布 workflow 根据 `VERSION` 创建同名 Git tag。
 - 如果 `VERSION` 对应 tag 指向其它 commit，发布 workflow 会失败，必须先升级 `VERSION`。
@@ -20,16 +20,16 @@
 
 ## Release 资产命名
 
-假设 `VERSION=v0.1.0-rc.3`：
+假设 `VERSION=v0.1.0-rc.4`：
 
 ```text
-hookgram-v0.1.0-rc.3-windows-amd64.zip
-hookgram-v0.1.0-rc.3-windows-arm64.zip
-hookgram-v0.1.0-rc.3-linux-amd64.tar.gz
-hookgram-v0.1.0-rc.3-linux-arm64.tar.gz
-hookgram-v0.1.0-rc.3-linux-386.tar.gz
-hookgram-v0.1.0-rc.3-linux-armv7.tar.gz
-hookgram-v0.1.0-rc.3-checksums.txt
+hookgram-v0.1.0-rc.4-windows-amd64.zip
+hookgram-v0.1.0-rc.4-windows-arm64.zip
+hookgram-v0.1.0-rc.4-linux-amd64.tar.gz
+hookgram-v0.1.0-rc.4-linux-arm64.tar.gz
+hookgram-v0.1.0-rc.4-linux-386.tar.gz
+hookgram-v0.1.0-rc.4-linux-armv7.tar.gz
+hookgram-v0.1.0-rc.4-checksums.txt
 ```
 
 压缩包内部二进制文件：
@@ -73,7 +73,7 @@ http://127.0.0.1:8787/api/version
 
 ## 已知限制
 
-- `v0.1.0-rc.3` 仍是 RC，不建议直接作为无人值守生产版本。
+- `v0.1.0-rc.4` 仍是 RC，不建议直接作为无人值守生产版本。
 - systemd 安装仅支持 Linux，不支持 Windows。
 - `--purge` 会删除 `/var/lib/hookgram` 下的配置和数据，执行前需要确认或显式传入 `--yes`。
 - Session 为内存态，服务重启后需要重新登录。

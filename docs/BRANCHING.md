@@ -23,7 +23,7 @@
 - 每次合并 `main` 前必须升级 `VERSION`。
 - 如果 `VERSION` 对应 tag 指向其它 commit，发布 workflow 会失败。
 - 如果 tag 已在当前 `main` commit 上，发布 workflow 会复用该 tag 并继续创建或更新 GitHub Release。
-- Git tag 必须与 `VERSION` 完全一致，例如 `v0.1.0-rc.3`。
+- Git tag 必须与 `VERSION` 完全一致，例如 `v0.1.0-rc.4`。
 - 不使用日期、随机字符串、`latest`、`final` 或 `release-final`。
 
 ## main 规则
@@ -45,9 +45,9 @@ git checkout -b feature/check-update
 
 ```bash
 git checkout dev
-printf "v0.1.0-rc.4\n" > VERSION
+printf "v0.1.0-rc.5\n" > VERSION
 git add VERSION
-git commit -m "chore: bump version to v0.1.0-rc.4"
+git commit -m "chore: bump version to v0.1.0-rc.5"
 git push origin dev
 ```
 
