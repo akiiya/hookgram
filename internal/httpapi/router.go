@@ -79,8 +79,8 @@ func NewRouter(cfg *config.Manager, services *service.Container) http.Handler {
 func (s *Server) version(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"version":   appversion.Version,
-		"commit":    appversion.Commit,
-		"buildDate": appversion.BuildDate,
+		"commit":    "unknown",
+		"buildDate": "unknown",
 		"platform":  runtime.GOOS + "/" + runtime.GOARCH,
 	})
 }

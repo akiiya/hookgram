@@ -179,7 +179,7 @@ latest_version() {
 }
 
 validate_version() {
-  if ! printf '%s' "$1" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$'; then
+  if ! printf '%s' "$1" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z][0-9A-Za-z.-]*)?$'; then
     fail "版本号不符合规范：$1"
   fi
 }
@@ -382,7 +382,7 @@ print_install_plan() {
 install_hookgram() {
   need_root
 
-  local arch version asset url
+  local arch version asset_version asset legacy_asset url legacy_url
   arch="$(detect_arch)"
   version="${HOOKGRAM_VERSION:-}"
   if [ -z "$version" ]; then
@@ -396,8 +396,11 @@ install_hookgram() {
     validate_version "$version"
   fi
 
-  asset="hookgram-${version}-linux-${arch}.tar.gz"
+  asset_version="${version#v}"
+  asset="hookgram_${asset_version}_linux_${arch}.tar.gz"
+  legacy_asset="hookgram-${version}-linux-${arch}.tar.gz"
   url="https://github.com/${REPO}/releases/download/${version}/${asset}"
+  legacy_url="https://github.com/${REPO}/releases/download/${version}/${legacy_asset}"
 
   if is_dry_run; then
     print_install_plan "$version" "$asset" "$url"
@@ -420,7 +423,12 @@ install_hookgram() {
   [ -n "$TMP_DIR" ] && [ -d "$TMP_DIR" ] || fail "创建临时目录失败"
 
   log "下载 ${url}"
-  download "$url" "${TMP_DIR}/${asset}"
+  if ! download "$url" "${TMP_DIR}/${asset}"; then
+    log "新资产命名下载失败，尝试旧命名：${legacy_url}"
+    asset="$legacy_asset"
+    url="$legacy_url"
+    download "$url" "${TMP_DIR}/${asset}"
+  fi
   mkdir -p "${TMP_DIR}/pkg"
   tar -xzf "${TMP_DIR}/${asset}" -C "${TMP_DIR}/pkg"
   [ -f "${TMP_DIR}/pkg/hookgram" ] || fail "Release 包中未找到 hookgram 可执行文件"
