@@ -14,7 +14,8 @@
 - Release Candidate：`v0.1.0-rc.1`、`v0.1.0-rc.2`、`v0.1.0-rc.3`
 - 正式版：`v0.1.0`、`v0.1.1`、`v0.2.0`、`v1.0.0`
 - `main` 发布 workflow 根据 `VERSION` 创建同名 Git tag。
-- 如果 `VERSION` 对应 tag 已存在，发布 workflow 会失败，必须先升级 `VERSION`。
+- 如果 `VERSION` 对应 tag 指向其它 commit，发布 workflow 会失败，必须先升级 `VERSION`。
+- 如果 tag 已在当前 `main` commit 上，发布 workflow 会复用该 tag 并继续创建或更新 GitHub Release。
 - 不使用随机字符串、日期主版本号、`latest`、`final` 或其它不规则命名。
 
 ## Release 资产命名
@@ -41,7 +42,7 @@ hookgram-v0.1.0-rc.3-checksums.txt
 ## 发布工程化
 
 - `ci.yml`：`dev` push 和指向 `main` 的 PR 只跑必要 CI，不创建 tag，不发布 Release。
-- `release.yml`：`main` push 后读取 `VERSION`，执行完整测试、前端构建、Go 测试、SQL 扫描、smoke、多平台构建、checksums、tag 创建和 GitHub Release 上传。
+- `release.yml`：`main` push 后读取 `VERSION`，执行完整测试、前端构建、Go 测试、SQL 扫描、smoke、多平台构建、checksums、tag 创建或复用、GitHub Release 创建或更新。
 - Release 构建通过 ldflags 注入 `version`、`commit`、`buildDate`。
 - `/api/version` 返回版本、commit、构建时间和运行平台。
 - 包含 `-rc.` 的版本自动标记为 prerelease。
