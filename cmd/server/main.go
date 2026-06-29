@@ -16,6 +16,7 @@ import (
 	"hookgram/internal/repository"
 	"hookgram/internal/service"
 	"hookgram/internal/telegram"
+	"hookgram/internal/version"
 )
 
 func main() {
@@ -47,7 +48,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("Hookgram 已启动: http://%s", addr)
+		log.Printf("Hookgram started version=%s http://%s", version.Version, addr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP 服务异常退出: %v", err)
 		}
