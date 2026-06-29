@@ -194,7 +194,7 @@ HOOKGRAM_CONFIG=/var/lib/hookgram/config.yaml
 - `release.yml`：`main` 被合并后自动读取 `VERSION`，完成测试、验证、打 tag、构建多平台二进制、生成 checksums、创建 GitHub Release。
 - 不需要人工打 tag，也不需要人工创建 Release。
 - 发布下一个版本时，在 `dev` 修改 `VERSION`，例如 `v0.1.0-rc.3` -> `v0.1.0-rc.4`，CI 通过后合并到 `main`。
-- 如果 `VERSION` 对应 tag 已存在，发布 workflow 会失败并提示升级版本号。
+- 如果 `VERSION` 对应 tag 指向其它 commit，发布 workflow 会失败并提示升级版本号；如果 tag 已在当前 `main` commit 上，则会复用该 tag 并补齐或更新 Release。
 
 资产命名：
 

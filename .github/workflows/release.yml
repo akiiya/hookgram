@@ -18,6 +18,8 @@ jobs:
       prerelease: ${{ steps.version.outputs.prerelease }}
       commit: ${{ steps.version.outputs.commit }}
       build_date: ${{ steps.version.outputs.build_date }}
+      tag_exists: ${{ steps.version.outputs.tag_exists }}
+      release_exists: ${{ steps.version.outputs.release_exists }}
     steps:
       - name: Ensure main ref
         run: |
@@ -33,6 +35,8 @@ jobs:
 
       - name: Resolve version
         id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git fetch --tags --force
           version="$(tr -d '[:space:]' < VERSION)"
@@ -40,8 +44,27 @@ jobs:
             echo "Invalid VERSION: $version"
             exit 1
           fi
+          head_sha="$(git rev-parse HEAD)"
+          tag_exists=false
           if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
-            echo "Tag $version already exists. Update VERSION before merging to main."
+            tag_exists=true
+            tag_sha="$(git rev-list -n 1 "$version")"
+            if [ "$tag_sha" != "$head_sha" ]; then
+              echo "Tag $version already exists at $tag_sha, but current main is $head_sha."
+              echo "Update VERSION before merging to main. Existing tags are never overwritten."
+              exit 1
+            fi
+          fi
+          release_exists=false
+          release_status="$(curl -sS -o /tmp/hookgram-release.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${version}")"
+          if [ "$release_status" = "200" ]; then
+            release_exists=true
+          elif [ "$release_status" != "404" ]; then
+            echo "Failed to query release $version, status $release_status"
+            cat /tmp/hookgram-release.json
             exit 1
           fi
           prerelease=false
@@ -54,6 +77,8 @@ jobs:
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
           echo "commit=$commit" >> "$GITHUB_OUTPUT"
           echo "build_date=$build_date" >> "$GITHUB_OUTPUT"
+          echo "tag_exists=$tag_exists" >> "$GITHUB_OUTPUT"
+          echo "release_exists=$release_exists" >> "$GITHUB_OUTPUT"
 
   test:
     name: Test
@@ -277,21 +302,38 @@ jobs:
           sha256sum hookgram-*.zip hookgram-*.tar.gz > "hookgram-${VERSION}-checksums.txt"
           cat "hookgram-${VERSION}-checksums.txt"
 
-      - name: Create tag
+      - name: Create or reuse tag
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
+          TAG_EXISTS: ${{ needs.prepare.outputs.tag_exists }}
         run: |
           git fetch --tags --force
+          if [ "$TAG_EXISTS" = "true" ]; then
+            tag_sha="$(git rev-list -n 1 "$VERSION")"
+            if [ "$tag_sha" != "$GITHUB_SHA" ]; then
+              echo "Tag $VERSION exists at $tag_sha, but current main is $GITHUB_SHA."
+              echo "Existing tags are never overwritten."
+              exit 1
+            fi
+            echo "Tag $VERSION already exists on current commit; reusing it."
+            exit 0
+          fi
           if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
-            echo "Tag $VERSION already exists. Update VERSION before merging to main."
-            exit 1
+            tag_sha="$(git rev-list -n 1 "$VERSION")"
+            if [ "$tag_sha" != "$GITHUB_SHA" ]; then
+              echo "Tag $VERSION exists at $tag_sha, but current main is $GITHUB_SHA."
+              echo "Existing tags are never overwritten."
+              exit 1
+            fi
+            echo "Tag $VERSION already exists on current commit; reusing it."
+            exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag "$VERSION" "$GITHUB_SHA"
           git push origin "refs/tags/$VERSION"
 
-      - name: Create release
+      - name: Create or update release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare.outputs.version }}
@@ -299,11 +341,17 @@ jobs:
           body_path: RELEASE.md
           prerelease: ${{ needs.prepare.outputs.prerelease }}
           files: release-assets/*
+          overwrite_files: true
 
       - name: Release summary
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
+          TAG_EXISTS: ${{ needs.prepare.outputs.tag_exists }}
+          RELEASE_EXISTS: ${{ needs.prepare.outputs.release_exists }}
         run: |
           echo "Published Hookgram ${VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Tag existed before release job: ${TAG_EXISTS}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Release existed before release job: ${RELEASE_EXISTS}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           ls -1 release-assets >> "$GITHUB_STEP_SUMMARY"
